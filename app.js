@@ -35,8 +35,7 @@ setInterval(() => {
     await producer.send({
       topic: 'test',
       messages: [
-        { key: 'key1', value: 'hello world' },
-        { key: 'key2', value: 'hey hey!' }
+        { key: 'name', value: 'Ashish K' }
       ],
     })
     await producer.disconnect()
