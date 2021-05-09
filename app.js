@@ -42,7 +42,6 @@ setInterval(() => {
   }
 
   sendMessage();
-  console.log('46');
 }, 10000);
 
 const consumer = kafka.consumer({ groupId: 'testapp' })
