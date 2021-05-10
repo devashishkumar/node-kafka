@@ -74,7 +74,7 @@ setInterval(() => {
     return topics;
   };
   return  getAllTopics().then(allTopics => {
-    console.log(allTopics, '79');
+    console.log(allTopics);
   })
 }, 5000);
 // get all topics end
