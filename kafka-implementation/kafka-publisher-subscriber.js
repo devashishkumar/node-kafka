@@ -9,12 +9,11 @@ module.exports = function (kafka) {
     // kafka producer start
     const producer = kafka.producer();
     let newTopic = 'test';
-    setInterval(() => {
-        // newTopic = generateRandomString();
+    // setInterval(() => {
         var sendMessage = async () => {
             await producer.connect()
             await producer.send({
-                topic: 'testnew',
+                topic: 'test',
                 messages: [
                     { key: 'name', value: 'Ashish K' }
                 ],
@@ -23,7 +22,7 @@ module.exports = function (kafka) {
         }
 
         sendMessage();
-    }, 10000);
+    // }, 10000);
     // kafka producer end
 
     // kafka subscriber start
@@ -32,7 +31,7 @@ module.exports = function (kafka) {
     var receiveMessage = async () => {
         try {
             await consumer.connect()
-            await consumer.subscribe({ topic: 'testnew', fromBeginning: true })
+            await consumer.subscribe({ topic: 'test', fromBeginning: true })
 
             await consumer.run({
                 eachMessage: async ({ topic, partition, message }) => {
@@ -49,20 +48,20 @@ module.exports = function (kafka) {
     // kafka subscriber end
     receiveMessage();
 
-    setInterval(() => {
-        const admin = kafka.admin()
-        const fetchTopicOffsets = async (topicName) => {
-            await admin.connect();
-            const topicOffsets = await admin.fetchTopicOffsets(topicName);
-            return topicOffsets;
-        };
-        return fetchTopicOffsets('testnew').then(topicOffsets => {
-            console.log(topicOffsets, '60');
-        })
-    }, 10000)
+    // get topic offsets
+    const admin = kafka.admin()
+    const fetchTopicOffsets = async (topicName) => {
+        await admin.connect();
+        const topicOffsets = await admin.fetchTopicOffsets(topicName);
+        return topicOffsets;
+    };
+    return fetchTopicOffsets('testnew').then(topicOffsets => {
+        console.log(topicOffsets, '60');
+    })
+    // get topic offsets end
+
 
     // get all topics start
-    const admin = kafka.admin()
     var getAllTopics = async () => {
         await admin.connect();
         const topics = await admin.listTopics();

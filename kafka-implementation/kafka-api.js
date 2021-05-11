@@ -21,7 +21,9 @@ module.exports = function (app, kafka) {
 
     app.get('/getTopicMessages', (req, res) => {
         const topicName = req.query.topic;
-        return fetchTopicOffsets(topicName.toString()).then(resp => {
+        // console.log(getTopicMessages(topicName));
+        // return res.send(getTopicMessages(topicName));
+        return getTopicMessages(topicName).then(resp => {
             return res.send(resp);
         })
     });
@@ -58,4 +60,59 @@ module.exports = function (app, kafka) {
         const topicOffsets = await admin.fetchTopicOffsets(topicName);
         return topicOffsets;
     };
+
+    // get topic messages
+    const consumer = kafka.consumer({ groupId: 'testapp' })
+    const getTopicMessages = async (topicName) => {
+        console.log(topicName);
+        try {
+            await consumer.connect()
+            await consumer.subscribe({ topic: topicName, fromBeginning: true })
+            // const data = [];
+            // await consumer.run({
+            //     eachMessage: async ({ topic, partition, message }) => {
+            //         console.log({
+            //             value: message.value.toString()
+            //         })
+            //     },
+            // })
+            // return await data;
+
+            await consumer.run({
+                eachBatchAutoResolve: true,
+                eachBatch: async ({
+                    batch,
+                    resolveOffset,
+                    heartbeat,
+                    commitOffsetsIfNecessary,
+                    uncommittedOffsets,
+                    isRunning,
+                    isStale,
+                }) => {
+                    // const data = [];
+                    for (let message of batch.messages) {
+                        console.log({
+                            topic: batch.topic,
+                            partition: batch.partition,
+                            highWatermark: batch.highWatermark,
+                            message: {
+                                offset: message.offset,
+                                key: message.key.toString(),
+                                value: message.value.toString(),
+                                headers: message.headers,
+                            }
+                        });
+
+                        resolveOffset(message.offset)
+                        await heartbeat()
+                    }
+                    // return await data;
+                },
+            })
+
+        } catch (e) {
+            console.log('error');
+        }
+    };
+    // get topic messages end
 }
