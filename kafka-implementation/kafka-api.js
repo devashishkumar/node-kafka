@@ -1,4 +1,5 @@
 module.exports = function (app, kafka) {
+    topicMessages = [];
     app.get('/kafkatopics', (req, res) => {
         return getAllTopics().then(allTopics => {
             return res.send(allTopics);
@@ -22,10 +23,10 @@ module.exports = function (app, kafka) {
     app.get('/getTopicMessages', (req, res) => {
         const topicName = req.query.topic;
         // console.log(getTopicMessages(topicName));
-        // return res.send(getTopicMessages(topicName));
-        return getTopicMessages(topicName).then(resp => {
-            return res.send(resp);
-        })
+        getTopicMessages(topicName, res);
+        // return getTopicMessages(topicName).then(resp => {
+        //     return res.send(resp);
+        // })
     });
 
     const admin = kafka.admin()
@@ -63,12 +64,11 @@ module.exports = function (app, kafka) {
 
     // get topic messages
     const consumer = kafka.consumer({ groupId: 'testapp' })
-    const getTopicMessages = async (topicName) => {
+    const getTopicMessages = async (topicName, respObj) => {
         console.log(topicName);
         try {
-            await consumer.connect()
-            await consumer.subscribe({ topic: topicName, fromBeginning: true })
-            // const data = [];
+            // await consumer.connect()
+            // await consumer.subscribe({ topic: topicName, fromBeginning: true })
             // await consumer.run({
             //     eachMessage: async ({ topic, partition, message }) => {
             //         console.log({
@@ -76,43 +76,31 @@ module.exports = function (app, kafka) {
             //         })
             //     },
             // })
-            // return await data;
-
-            await consumer.run({
-                eachBatchAutoResolve: true,
-                eachBatch: async ({
-                    batch,
-                    resolveOffset,
-                    heartbeat,
-                    commitOffsetsIfNecessary,
-                    uncommittedOffsets,
-                    isRunning,
-                    isStale,
-                }) => {
-                    // const data = [];
-                    for (let message of batch.messages) {
-                        console.log({
-                            topic: batch.topic,
-                            partition: batch.partition,
-                            highWatermark: batch.highWatermark,
-                            message: {
-                                offset: message.offset,
-                                key: message.key.toString(),
-                                value: message.value.toString(),
-                                headers: message.headers,
-                            }
-                        });
-
-                        resolveOffset(message.offset)
-                        await heartbeat()
-                    }
-                    // return await data;
-                },
-            })
+            runConsumer(topicName);
+            console.log(this.topicMessages, '80');
 
         } catch (e) {
             console.log('error');
         }
+        // console.log(this.topicMessages, '114');
+        // return respObj.send({ data: this.topicMessages });
     };
     // get topic messages end
+
+    const runConsumer = async (topicName) => {
+
+        await consumer.connect()
+        await consumer.subscribe({ topic: topicName, fromBeginning: true })
+
+        await consumer.run({
+            eachMessage: async ({ topic, partition, message }) => {
+                this.topicMessages.push({
+                    partition,
+                    offset: message.offset,
+                    value: message.value.toString(),
+                })
+                console.log(this.topicMessages);
+            },
+        })
+    }
 }
